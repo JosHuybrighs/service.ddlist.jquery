@@ -31,6 +31,11 @@
 ; (function ($, win, document, undefined) {
 
     var pluginName = 'ddlist';
+    var ENTER = 13,
+        ESCAPE = 27,
+        SPACE = 32,
+        UP = 38,
+        DOWN = 40;
 
     function Plugin(element, options) {
         // Get the main element
@@ -39,6 +44,7 @@
         this.settings = {
             width: 260,
             selectionIndex: 0,
+            disabled: false,
             showSelectionTextOnly: false,
             onSelectedOnInit: false,
             onSelected: function (index, value, text) { }
@@ -51,11 +57,10 @@
         // Select index
         _selectIndex: function(index) {
             // Remove current 'ddListOptionIsSelected' class
-            var ddOptions = this.ddListObj.find('> ul');
-            ddOptions.find('a').removeClass('ddListOptionIsSelected');
+            this.ddOptions.find('a').removeClass('ddListOptionIsSelected');
 
             // Set 'ddListOptionIsSelected' class to element that corresponds with index
-            var selectedOption = ddOptions.find('a').eq(index);
+            var selectedOption = this.ddOptions.find('a').eq(index);
             selectedOption.addClass('ddListOptionIsSelected');
 
             // Update selected index/value/text 
@@ -71,15 +76,14 @@
             var selOption = this.selObj.find('option').eq(index);
             selOption.attr('selected', true);
 
-            var ddSelection = this.ddListObj.find('> a');
             // Update ddListSelection element
             if (this.settings.showSelectionTextOnly) {
-                ddSelection.html(optionData.text);
+                this.ddSelection.html(optionData.text);
             }
             else {
-                ddSelection.html((optionData.imageSrc ? '<img src="' + optionData.imageSrc + '" />' : '') +
-                                 (optionData.text ? '<label>' + optionData.text + '</label>' : '') +
-                                 (optionData.description ? '<small>' + optionData.description + '</small>' : '')
+                this.ddSelection.html((optionData.imageSrc ? '<img src="' + optionData.imageSrc + '" />' : '') +
+                                      (optionData.text ? '<label>' + optionData.text + '</label>' : '') +
+                                      (optionData.description ? '<small>' + optionData.description + '</small>' : '')
                 );
             }
         },
@@ -95,10 +99,43 @@
             this.ddListObj.addClass('ddListIsOpen');
         },
 
-        _close: function() {
+        _close: function () {
             // Close drop down
             this.ddListObj.removeClass('ddListIsOpen');
             this.ddListObj.find('> ul').slideUp(50);
+        },
+
+        _enable: function () {
+            var self = this;
+            this.ddListObj.removeClass('ddListDisabled');
+            // Bind event handlers
+            this.ddSelection.on('click.ddlist', function () {
+                self._open();
+            });
+            this.ddOptions.find('a').on('click.ddlist', function () {
+                // Select (new) index
+                self._selectIndex($(this).closest('li').index());
+                // Close
+                self._close();
+                // Callback function on selection
+                self.settings.onSelected.call(self, self.selectedIndex, self.selectedValue, self.selectedText);
+            });
+            //Click anywhere to close
+            this.ddListObj.on('click.ddlist', function (e) {
+                e.stopPropagation();
+            });
+            $('body').on('click.ddlist', function () {
+                self._close();
+            });
+        },
+
+        _disable: function () {
+            // Unbind event handlers
+            $('body').off('.ddlist');
+            this.ddListObj.off('.ddlist');
+            this.ddOptions.find('a').off('.ddlist');
+            this.ddSelection.off('.ddlist');
+            this.ddlistObj.addClass('ddListDisabled');
         },
 
         // Initialize 
@@ -126,42 +163,30 @@
             this.ddListObj.insertAfter(this.selObj);
             // Get newly created <a> (shows selection) and <ul> (holds options) elements, set
             // their width and insert the <select> options
-            var ddSelection = this.ddListObj.find('> a');
-            ddSelection.css({ width: this.settings.width });
-            var ddOptions = this.ddListObj.find('> ul');
-            ddOptions.css({ width: this.settings.width });
+            this.ddSelection = this.ddListObj.find('> a');
+            this.ddSelection.css({ width: this.settings.width });
+            this.ddOptions = this.ddListObj.find('> ul');
+            this.ddOptions.css({ width: this.settings.width });
             // Add options to <ul> element
             $.each(this.options, function (index, item) {
               if (item.selected) {
                 self.settings.selectionIndex = index;
               }
-              ddOptions.append('<li>' +
-                                 '<a>' +
-                                 (item.imageSrc ? ' <img' + (self.settings.imagePosition == "right" ? ' class="ddListImageRight"' : '') + ' src="' + item.imageSrc + '" />' : '') +
-                                 (item.text ? ' <label>' + item.text + '</label>' : '') +
-                                 (item.description ? ' <small>' + item.description + '</small>' : '') +
-                                 '</a>' +
-                               '</li>');
+              self.ddOptions.append('<li>' +
+                                      '<a>' +
+                                        (item.imageSrc ? ' <img src="' + item.imageSrc + '" />' : '') +
+                                        (item.text ? ' <label>' + item.text + '</label>' : '') +
+                                        (item.description ? ' <small>' + item.description + '</small>' : '') +
+                                      '</a>' +
+                                    '</li>');
             });
             // Bind event handlers
-            ddSelection.on('click.ddlist', function () {
-              self._open();
-            });
-            ddOptions.find('a').on('click.ddlist', function () {
-              // Select (new) index
-              self._selectIndex($(this).closest('li').index());
-              // Close
-              self._close();
-              // Callback function on selection
-              self.settings.onSelected.call(self, self.selectedIndex, self.selectedValue, self.selectedText);
-            });
-            //Click anywhere to close
-            this.ddListObj.on('click.ddlist', function (e) {
-              e.stopPropagation();
-            });
-            $('body').on('click.ddlist', function () {
-              self._close();
-            });
+            if (!this.settings.disabled) {
+                this._enable();
+            }
+            else {
+                this.ddlistObj.addClass('ddListDisabled');
+            }
             // Set 'Selection' element 
             this._selectIndex(this.settings.selectionIndex);
             if (this.settings.onSelectedOnInit) {
@@ -202,6 +227,21 @@
                         break;
                     }
                 }
+            }
+        },
+
+        // Enable/disable dropdown
+        // Arguments:
+        // - argsArray: An array where the first element is an boolean.
+        //              - When set to true the dropdown list is enabled
+        //              - When set to false the dropdown list is disabled
+        enable: function (argsArray) {
+            var isEnable = argsArray[0];
+            if (isEnable) {
+                this._enable();
+            }
+            else {
+                this._disable();
             }
         },
 
