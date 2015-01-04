@@ -20,6 +20,12 @@
   color: #333;
   font-weight: normal;
 }
+.ddListContainer.ddListDisabled > a {
+  border: solid 2px #e0e0e0;
+  cursor: default; 
+  background: #f8f8f8;
+  color: #999;
+}
 
 /* The 'selection' rectangle of the dropdownlist when open */
 .ddListIsOpen > a,
@@ -39,6 +45,9 @@
   margin-top: -4px;
   border: solid 7px transparent; 
   border-top: solid 7px #505050;
+}
+.ddListDisabled .ddListArrow {
+  border-top: solid 7px #999;
 }
 .ddListIsOpen .ddListArrow {
   border: solid 7px transparent !important; 
@@ -95,8 +104,8 @@
 }
 
 /* Additional styling of text, img, description for 'selection' and 'option' */
-.ddListContainer > a > label,
-.ddListContainer > ul li a > label {
+.ddListContainer:not(.ddListDisabled) > a > label,
+.ddListContainer:not(.ddListDisabled) > ul li a > label {
   cursor: pointer;
 }
 .ddListContainer > a > label { 
