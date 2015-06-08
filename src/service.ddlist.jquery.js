@@ -1,7 +1,7 @@
 ﻿/****************************************************************************************************** 
  * A jquery plugin implementing a styleable dropdown list
  * 
- * Version 1.1.0
+ * Version 1.1.1
  *
  * This plugin is developed with ddslick as example (See http://designwithpc.com/Plugins/ddslick), but
  * improved in some areas; particularly where ddslick lacks support for posting the "selected" option
@@ -28,6 +28,8 @@
  *
  * Change history:
  *
+ * Version 1.1.1 - Added possibility to open the list when clicking/touching the right arrow.
+ *                 Successive clicking/touching the top area now opens and closes the list.
  * Version 1.1.0 - Added possibility to offer list data 'options' through JSON.
  *                 Added support for 'disabled' attribute in <select>.
  * Version 1.0.0 - First version.
@@ -43,7 +45,7 @@
  ******************************************************************************************************/
 
 ; (function ($, win, document, undefined) {
-
+    var version = '1.1.1';
     var pluginName = 'ddlist';
     var ENTER = 13,
         ESCAPE = 27,
@@ -55,6 +57,7 @@
         // Get the main element
         this.element = element;
         this.selObj = $(element);
+        this.isOpen = false;
         this.settings = {
             width: 260,
             selectionIndex: 0,
@@ -113,12 +116,14 @@
             }
             this.ddListObj.find('> ul').slideDown('fast');
             this.ddListObj.addClass('ddListIsOpen');
+            this.isOpen = true;
         },
 
         _close: function () {
             // Close drop down
             this.ddListObj.removeClass('ddListIsOpen');
             this.ddListObj.find('> ul').slideUp(50);
+            this.isOpen = false;
         },
 
         _enable: function () {
@@ -126,16 +131,24 @@
             this.settings.disabled = false;
             this.ddListObj.removeClass('ddListDisabled');
             // Bind event handlers
-            this.ddSelection.on('click.ddlist', function () {
-                self._open();
+//            this.ddSelection.on('click.ddlist', function () {
+            this.ddSelection.parent().on('click.ddlist', function (e) {
+                if (self.isOpen) {
+                    self._close();
+                }
+                else {
+                    self._open();
+                }
+                e.stopPropagation();
             });
-            this.ddOptions.find('a').on('click.ddlist', function () {
+            this.ddOptions.find('a').on('click.ddlist', function (e) {
                 // Select (new) index
                 self._selectIndex($(this).closest('li').index());
                 // Close
                 self._close();
                 // Callback function on selection
                 self.settings.onSelected.call(self, self.selectedIndex, self.selectedValue, self.selectedText);
+                e.stopPropagation();
             });
             //Click anywhere to close
             this.ddListObj.on('click.ddlist', function (e) {
@@ -152,7 +165,8 @@
             $('body').off('.ddlist-' + this.selObj.attr('id'));
             this.ddListObj.off('.ddlist');
             this.ddOptions.find('a').off('.ddlist');
-            this.ddSelection.off('.ddlist');
+//            this.ddSelection.off('.ddlist');
+            this.ddSelection.parent().off('.ddlist');
             this.ddListObj.addClass('ddListDisabled');
         },
 
@@ -198,6 +212,7 @@
 
         // Initialize 
         _init: function (options) {
+            this.isOpen = false;
             this.settings = $.extend({}, this.settings, options);
             var self = this;
 
