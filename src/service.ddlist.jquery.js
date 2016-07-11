@@ -1,7 +1,7 @@
 ﻿/****************************************************************************************************** 
  * A jquery plugin implementing a styleable dropdown list
  * 
- * Version 1.1.1
+ * Version 1.1.2
  *
  * This plugin is developed with ddslick as example (See http://designwithpc.com/Plugins/ddslick), but
  * improved in some areas; particularly where ddslick lacks support for posting the "selected" option
@@ -28,6 +28,8 @@
  *
  * Change history:
  *
+ * Version 1.1.2 - You can configure the plugin now to hide the top element that shows the selected value
+ *                 when the list is popped up. 
  * Version 1.1.1 - Added possibility to open the list when clicking/touching the right arrow.
  *                 Successive clicking/touching the top area now opens and closes the list.
  * Version 1.1.0 - Added possibility to offer list data 'options' through JSON.
@@ -45,7 +47,7 @@
  ******************************************************************************************************/
 
 ; (function ($, win, document, undefined) {
-    var version = '1.1.1';
+    var version = '1.1.2';
     var pluginName = 'ddlist';
     var ENTER = 13,
         ESCAPE = 27,
@@ -63,6 +65,7 @@
             selectionIndex: 0,
             disabled: false,
             showSelectionTextOnly: false,
+			hideTopSelectedElement: false,
             onSelectedOnInit: false,
             onSelected: function (index, value, text) { },
             itemsSource: null
@@ -114,6 +117,11 @@
                 otherOpenListObjs.removeClass('ddListIsOpen');
                 otherOpenListObjs.find('> ul').slideUp(50);
             }
+			// Hide top element if configured to do so
+            if (this.settings.hideTopSelectedElement) {
+				this.ddListObj.find('> a').hide();
+				this.ddListObj.addClass('topElementIsHidden');
+			}
             this.ddListObj.find('> ul').slideDown('fast');
             this.ddListObj.addClass('ddListIsOpen');
             this.isOpen = true;
@@ -123,6 +131,10 @@
             // Close drop down
             this.ddListObj.removeClass('ddListIsOpen');
             this.ddListObj.find('> ul').slideUp(50);
+			// Show top element if it would have been hidden
+            this.ddListObj.find('> a').show();
+            this.ddListObj.removeClass('topElementIsHidden');
+
             this.isOpen = false;
         },
 
