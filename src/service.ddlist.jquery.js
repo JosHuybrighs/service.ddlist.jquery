@@ -117,9 +117,9 @@
                 otherOpenListObjs.removeClass('ddListIsOpen');
                 otherOpenListObjs.find('> ul').slideUp(50);
             }
-			// Hide top element if configured to do so
+			// Hide top element if configured to do so 
             if (this.settings.hideTopSelectedElement) {
-				this.ddListObj.find('> a').hide();
+				// Hiding is done through CSS (by setting the top position of the <ul> container)
 				this.ddListObj.addClass('topElementIsHidden');
 			}
             this.ddListObj.find('> ul').slideDown('fast');

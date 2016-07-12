@@ -62,7 +62,6 @@
   position: absolute;
   z-index: 2000;
   border: solid 2px #212121;
-/*  border-top: none; */
   list-style: none;
   margin: 0;
   padding: 0;
@@ -72,9 +71,18 @@
   -webkit-box-shadow: 0 1px 5px #ddd;
   box-shadow: 0 1px 5px #ddd;
 }
+
+/* Remove border top when the list is right underneath the top element */
 .ddListContainer:not(.topElementIsHidden) > ul {
   border-top: none;
 }
+/* Position the list at the same spot as the top element when the top element must be hidden.
+   We'll keep the top element however active in order not to have any changes in the page
+   rendering when the list pops up. */
+.ddListContainer.topElementIsHidden > ul {
+  top: 0px;
+}
+
 .ddListContainer > ul li { 
   margin-bottom: 0;
 }
